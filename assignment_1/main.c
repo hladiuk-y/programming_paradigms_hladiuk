@@ -95,7 +95,10 @@ void startNewLine(char ***textLines, int *numLines) {
 void printText(char **textLines, int numLines) {
     printf("\nStored text:\n");
     for (int i = 0; i < numLines; i++) {
-        printf("%s\n", textLines[i]); // проходимо по всіх рядках і виводимо їх
+        for (int j = 0; j < strlen(textLines[i]); j++) {
+            printf("%c", textLines[i][j]); // проходимо по всіх символах в рядку і виводимо їх
+        }
+        printf("\n"); // додати новий рядок після кожного текстового рядка
     }
 }
 
