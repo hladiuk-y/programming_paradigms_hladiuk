@@ -3,13 +3,14 @@
 #include <string.h> // бібліотека для роботи з рядками
 
 void printHelp();
-void processCommand(const char *command, char ***textLines, int *numLines);
-void appendText(char ***textLines, int *numLines, const char *text);
+void appendText(char ***textLines, int *numLines, const char *text, int silent);
 void startNewLine(char ***textLines, int *numLines);
 void printText(char **textLines, int numLines);
+void saveTextToFile(char **textLines, int numLines, const char *filename);
+void loadTextFromFile(char ***textLines, int *numLines, const char *filename);
 void freeMemory(char **textLines, int numLines);
 void clearConsole();
- //обʼявляємо функціїї на початку програми,
+//обʼявляємо функціїї на початку програми,
 // щоб надалі з будь-якого місця до них був доступ
 
 int main() {
@@ -25,23 +26,28 @@ int main() {
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = 0;
 
-        if (strcmp(input, "help") == 0) { // string comparison
+        if (strcmp(input, "help") == 0) {
             printHelp();
         } else if (strcmp(input, "exit") == 0) {
             printf("Exiting...\n");
             break;
         } else if (strncmp(input, "append ", 7) == 0) {
-            processCommand(input, &textLines, &numLines);
+            appendText(&textLines, &numLines, input + 7, 0);
         } else if (strcmp(input, "print") == 0) {
             printText(textLines, numLines);
         } else if (strcmp(input, "newline") == 0) {
             startNewLine(&textLines, &numLines);
+        } else if (strncmp(input, "save ", 5) == 0) {
+            saveTextToFile(textLines, numLines, input + 5);
+        } else if (strncmp(input, "load ", 5) == 0) {
+            loadTextFromFile(&textLines, &numLines, input + 5);
+            printText(textLines, numLines);
         } else {
-            printf("Invalid command. Type 'help' for available commands.\n");
+            printf("The command '%s' is not implemented.\n", input);
         }
     }
 
-    freeMemory(textLines, numLines );
+    freeMemory(textLines, numLines);
     return 0;
 }
 
@@ -52,17 +58,12 @@ void printHelp() {
     printf("3. append <text> - Append text to the stored text\n");
     printf("4. newline - Start a new line\n");
     printf("5. print - Print the stored text\n");
+    printf("6. save <filename> - Save the stored text to a file\n");
+    printf("7. load <filename> - Load text from a file\n");
 }
 
-void processCommand(const char *command, char ***textLines, int *numLines) {
-    if (strncmp(command, "append ", 7) == 0) {
-        appendText(textLines, numLines, command + 7);
-    } else {
-        printf("The command '%s' is not implemented.\n", command);
-    }
-}
-
-void appendText(char ***textLines, int *numLines, const char *text) {
+void appendText(char ***textLines, int *numLines, const char *text, int silent)
+{
     (*numLines)++;
     *textLines = realloc(*textLines, (*numLines) * sizeof(char *)); // виділення памʼяті для зберігання нового рядка
     if (*textLines == NULL) {
@@ -74,7 +75,9 @@ void appendText(char ***textLines, int *numLines, const char *text) {
         fprintf(stderr, "Memory allocation failed.\n");
         exit(EXIT_FAILURE); // обробка помилки
     }
-    printf("Text successfully appended: \"%s\"\n", text);
+    if (!silent) {
+        printf("Text successfully appended: \"%s\"\n", text);
+    }
 }
 
 void startNewLine(char ***textLines, int *numLines) {
@@ -102,11 +105,47 @@ void printText(char **textLines, int numLines) {
     }
 }
 
+void saveTextToFile(char **textLines, int numLines, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        fprintf(stderr, "Could not open file %s for writing.\n", filename);
+        return;
+    }
+    for (int i = 0; i < numLines; i++) {
+        for (int j = 0; j < strlen(textLines[i]); j++) {
+            fputc(textLines[i][j], file);
+        }
+        fputc('\n', file);
+    }
+    fclose(file);
+    printf("Text successfully saved to file: %s\n", filename);
+}
+
+void loadTextFromFile(char ***textLines, int *numLines, const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Could not open file %s for reading.\n", filename);
+        return;
+    }
+
+    freeMemory(*textLines, *numLines);
+    *textLines = NULL;
+    *numLines = 0;
+
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        buffer[strcspn(buffer, "\n")] = 0;
+        appendText(textLines, numLines, buffer, 1);
+    }
+    fclose(file);
+    printf("Text successfully loaded from file: %s\n", filename);
+}
+
 void freeMemory(char **textLines, int numLines) {
     for (int i = 0; i < numLines; i++) {
         free(textLines[i]); // звільнення памʼяті де були рядки
     }
-    free(textLines); // звільненн памʼяті де був масив
+    free(textLines); // звільнення памʼяті де був масив
 }
 
 void clearConsole() {
