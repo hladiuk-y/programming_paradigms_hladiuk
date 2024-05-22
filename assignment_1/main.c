@@ -9,7 +9,7 @@ void startNewLine(char ***textLines, int *numLines);
 void printText(char **textLines, int numLines);
 void freeMemory(char **textLines, int numLines);
 void clearConsole();
-//обʼявляємо функціїї на початку програми,
+ //обʼявляємо функціїї на початку програми,
 // щоб надалі з будь-якого місця до них був доступ
 
 int main() {
@@ -103,7 +103,7 @@ void freeMemory(char **textLines, int numLines) {
     for (int i = 0; i < numLines; i++) {
         free(textLines[i]); // звільнення памʼяті де були рядки
     }
-    free(textLines); // звільнення памʼяті де був масив
+    free(textLines); // звільненн памʼяті де був масив
 }
 
 void clearConsole() {
