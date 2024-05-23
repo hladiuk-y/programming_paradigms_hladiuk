@@ -8,7 +8,7 @@ void startNewLine(char ***textLines, int *numLines);
 void printText(char **textLines, int numLines);
 void saveTextToFile(char **textLines, int numLines, char *filename);
 void loadTextFromFile(char ***textLines, int *numLines, char *filename);
-void searchSubstring(char **textLines, int numLines, const char *substring);
+void searchSubstring(char **textLines, int numLines, char *substring);
 void freeMemory(char **textLines, int numLines);
 void clearConsole();
 //обʼявляємо функціїї на початку програми,
