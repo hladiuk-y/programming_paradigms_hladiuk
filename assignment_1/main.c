@@ -25,11 +25,12 @@ int main() {
     printf("Welcome to the command parser!\n");
 
     while (1) {
-        clearConsole();
         printf("\nEnter a command: ");
         char input[100];
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = 0;
+
+        clearConsole();
 
         if (strcmp(input, "help") == 0) {
             printHelp();
