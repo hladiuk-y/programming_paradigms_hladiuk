@@ -75,20 +75,46 @@ void appendText(char ***textLines, int *numLines, char *text, int silent) // ф�
 // передаємо динамічіний масив наших стрінгів, кількість рядків, наш рядок який ми будемо переписувати,
 // прапорець, який вказує, чи повинна функція виводити повідомлення
 {
-    (*numLines)++; // збільшуємо кількість рядків
-    *textLines = realloc(*textLines, (*numLines) * sizeof(char *)); // виділення памʼяті для зберігання нового рядка
-    // кількість наших рядків помножена на розмір памʼяті, який потрібен для збергіння нашого рядка
-    if (*textLines == NULL) {
-        fprintf(stderr, "Memory allocation failed.\n");
-        exit(EXIT_FAILURE); // обробка помилки
+    if (*numLines == 0) {
+        // якщо ще немає жодного рядка, створюємо новий
+        *textLines = malloc(sizeof(char *));
+        if (*textLines == NULL) {
+            fprintf(stderr, "Memory allocation failed.\n");
+            exit(EXIT_FAILURE); // обробка помилки
+        }
+        *numLines = 1;
+        (*textLines)[0] = strdup(""); // створюємо порожній рядок
+        if ((*textLines)[0] == NULL) {
+            fprintf(stderr, "Memory allocation failed.\n");
+            exit(EXIT_FAILURE); // обробка помилки
+        }
     }
-    (*textLines)[(*numLines) - 1] = strdup(text); // шукаємо останній рядок і копіюємо його в змінну text
-    if ((*textLines)[(*numLines) - 1] == NULL) {
+
+    // отримуємо останній рядок
+    int lastLineIndex = *numLines - 1;
+    char *currentLine = (*textLines)[lastLineIndex];
+
+    // перевіряємо, чи потрібно додати пробіл перед текстом
+    size_t additionalLength = strlen(text) + (strlen(currentLine) > 0 ? 1 : 0);
+    size_t newLength = strlen(currentLine) + additionalLength + 1;
+
+    // виділяємо нову пам'ять для доданого тексту
+    char *newLine = realloc(currentLine, newLength);
+    if (newLine == NULL) {
         fprintf(stderr, "Memory allocation failed.\n");
-        exit(EXIT_FAILURE); // обробка помилки
+        exit(EXIT_FAILURE);
     }
+
+    // додаємо пробіл, якщо рядок не порожній
+    if (strlen(currentLine) > 0) {
+        strcat(newLine, " ");
+    }
+    // додаємо новий текст до кінця поточного рядка
+    strcat(newLine, text);
+    (*textLines)[lastLineIndex] = newLine;
+
     if (!silent) {
-        printf("Text successfully appended: \"%s\"\n", text); // виводимо повідомлення, що текст додано
+        printf("Text successfully appended: \"%s\"\n", text);
     }
 }
 
