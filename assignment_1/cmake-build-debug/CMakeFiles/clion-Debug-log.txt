@@ -1,1 +1,0 @@
-CMakeLists.txt not found in /Users/liz/CLionProjects/programming_paradigms_hladiuk/assignment_1 Select CMakeLists.txt
