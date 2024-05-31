@@ -8,6 +8,6 @@ Developed a console-based text editor that will have the below functionality:
 - Use files to loading/saving the information;
 - Print the current text to console;
 - Search;
-- Clearing the console
+- Clearing the console.
 
-Also were created a test plan with test cases to test created text editor.
+Also test plan were created with test cases to test created text editor.
