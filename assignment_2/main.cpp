@@ -30,7 +30,6 @@ private:
         undoStack.push(state);
     }
 
-
 public:
     Text() : numLines(0) {
         for (auto & line : lines) {
@@ -55,7 +54,7 @@ public:
 
         int lastLineIndex = numLines - 1;
         char* currentLine = lines[lastLineIndex];
-        size_t additionalLength = strlen(text) + (strlen(currentLine) > 0 ? 1 : 0);
+        size_t additionalLength = strlen(text);
         size_t newLength = strlen(currentLine) + additionalLength + 1;
 
         char* newLine = static_cast<char*>(realloc(currentLine, newLength));
@@ -64,9 +63,6 @@ public:
             exit(EXIT_FAILURE);
         }
 
-        if (strlen(currentLine) > 0) {
-            strcat(newLine, " ");
-        }
         strcat(newLine, text);
         lines[lastLineIndex] = newLine;
 
@@ -107,6 +103,36 @@ public:
         std::cout << "Text successfully inserted: \"" << text << "\"" << std::endl;
     }
 
+    void deleteText(int lineIndex, int startIndex, int endIndex) {
+        saveState();
+        if (lineIndex < 0 || lineIndex >= numLines) {
+            std::cerr << "Invalid line index." << std::endl;
+            return;
+        }
+
+        char* currentLine = lines[lineIndex];
+        size_t currentLength = strlen(currentLine);
+        if (startIndex < 0 || endIndex > currentLength || startIndex > endIndex) {
+            std::cerr << "Invalid start or end index." << std::endl;
+            return;
+        }
+
+        size_t newLength = currentLength - (endIndex - startIndex + 1) + 1;
+        char* newLine = static_cast<char*>(malloc(newLength));
+        if (newLine == nullptr) {
+            std::cerr << "Memory allocation failed." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        memcpy(newLine, currentLine, startIndex);
+        memcpy(newLine + startIndex, currentLine + endIndex + 1, currentLength - endIndex);
+
+        free(currentLine);
+        lines[lineIndex] = newLine;
+
+        std::cout << "Deleted successfully!" << std::endl;
+    }
+
     void undo() {
         if (undoStack.empty()) {
             std::cout << "No actions to undo." << std::endl;
@@ -121,6 +147,7 @@ public:
         redoStack.push(currentState);
 
         Command lastState = undoStack.top();
+        undoStack.pop();
         clear();
         numLines = lastState.numLines;
         for (int i = 0; i < numLines; ++i) {
@@ -142,7 +169,6 @@ public:
         }
         undoStack.push(currentState);
 
-        // Відновити стан, який був до виконання undo
         Command nextState = redoStack.top();
         redoStack.pop();
         clear();
@@ -188,7 +214,7 @@ public:
             const char* line = lines[i];
             const char* pos = strstr(line, substring);
             while (pos) {
-                std::cout << "Found at line " << (i + 1) << ", position " << (pos - line + 1) << '\n';
+                std::cout << "Found at line " << i << ", position " << (pos - line) << '\n';
                 found = true;
                 pos = strstr(pos + 1, substring);
             }
@@ -280,20 +306,22 @@ public:
             sscanf(input + 5, "%s", filename);
             FileHandler::loadTextFromFile(text, filename);
             text.print();
-        } else if (strncmp(cmd, "search", 6) == 0)
-        {
+        } else if (strncmp(cmd, "search", 6) == 0) {
             const char* substring = input + 7;
             text.search(substring);
         } else if (strncmp(cmd, "undo", 4) == 0) {
             text.undo();
-        } else if (strncmp(cmd, "redo", 4) == 0) { // Додано обробку команди redo
+        } else if (strncmp(cmd, "redo", 4) == 0) {
             text.redo();
-        } else if (strncmp(cmd, "insert", 6) == 0)
-        {
+        } else if (strncmp(cmd, "insert", 6) == 0) {
             int lineIndex, charIndex;
             char word[MAX_LINE_LENGTH];
             sscanf(input + 7, "%d %d %s", &lineIndex, &charIndex, word);
-            text.insert(lineIndex - 1, charIndex - 1, word);
+            text.insert(lineIndex, charIndex, word);
+        } else if (strncmp(cmd, "delete", 6) == 0) {
+            int lineIndex, startIndex, endIndex;
+            sscanf(input + 7, "%d %d %d", &lineIndex, &startIndex, &endIndex);
+            text.deleteText(lineIndex, startIndex, endIndex);
         } else {
             std::cout << "The command '" << cmd << "' is not implemented.\n";
         }
@@ -308,8 +336,9 @@ public:
                   << "  save FILENAME - Save the text to a file\n"
                   << "  load FILENAME - Load text from a file\n"
                   << "  insert LINE INDEX TEXT - Insert text at the specified position\n"
+                  << "  delete LINE START END - Delete text from the specified line and index range\n"
                   << "  undo         - Undo the last command (up to 3)\n"
-                  << "  redo         - Redo the last undone command (up to 3)\n" // Додано команду redo
+                  << "  redo         - Redo the last undone command (up to 3)\n"
                   << "  search TEXT  - Search for text in the stored lines\n"
                   << "  exit         - Exit the editor\n";
     }
