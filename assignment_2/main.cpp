@@ -3,7 +3,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <stack>
-#include <vector>
 
 #define MAX_LINES 1000
 #define MAX_LINE_LENGTH 256
@@ -14,7 +13,7 @@ private:
     int numLines;
 
     struct Command {
-        std::vector<std::string> lines;
+        char* lines[MAX_LINES]{};
         int numLines{};
     };
 
@@ -25,9 +24,15 @@ private:
         Command state;
         state.numLines = numLines;
         for (int i = 0; i < numLines; ++i) {
-            state.lines.emplace_back(lines[i]);
+            state.lines[i] = strdup(lines[i]);
         }
         undoStack.push(state);
+    }
+
+    static void clearCommandLines(Command& command) {
+        for (int i = 0; i < command.numLines; ++i) {
+            free(command.lines[i]);
+        }
     }
 
 public:
@@ -142,7 +147,7 @@ public:
         Command currentState;
         currentState.numLines = numLines;
         for (int i = 0; i < numLines; ++i) {
-            currentState.lines.emplace_back(lines[i]);
+            currentState.lines[i] = strdup(lines[i]);
         }
         redoStack.push(currentState);
 
@@ -151,8 +156,9 @@ public:
         clear();
         numLines = lastState.numLines;
         for (int i = 0; i < numLines; ++i) {
-            lines[i] = strdup(lastState.lines[i].c_str());
+            lines[i] = strdup(lastState.lines[i]);
         }
+        clearCommandLines(lastState);
         std::cout << "Undo successful." << std::endl;
     }
 
@@ -165,7 +171,7 @@ public:
         Command currentState;
         currentState.numLines = numLines;
         for (int i = 0; i < numLines; ++i) {
-            currentState.lines.emplace_back(lines[i]);
+            currentState.lines[i] = strdup(lines[i]);
         }
         undoStack.push(currentState);
 
@@ -174,8 +180,9 @@ public:
         clear();
         numLines = nextState.numLines;
         for (int i = 0; i < numLines; ++i) {
-            lines[i] = strdup(nextState.lines[i].c_str());
+            lines[i] = strdup(nextState.lines[i]);
         }
+        clearCommandLines(nextState);
         std::cout << "Redo successful." << std::endl;
     }
 
