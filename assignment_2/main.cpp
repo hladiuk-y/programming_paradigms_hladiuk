@@ -11,6 +11,8 @@ class Text {
 private:
     char* lines[MAX_LINES]{};
     int numLines;
+    char* cutText;
+    char* copiedText;
 
     struct Command {
         char* lines[MAX_LINES]{};
@@ -36,7 +38,7 @@ private:
     }
 
 public:
-    Text() : numLines(0) {
+    Text() : numLines(0), cutText(nullptr), copiedText(nullptr) {
         for (auto & line : lines) {
             line = nullptr;
         }
@@ -72,7 +74,7 @@ public:
         lines[lastLineIndex] = newLine;
 
         if (!silent) {
-            std::cout << "Text successfully appended: \"" << text << "\"" << std::endl;
+            std::cout << "Text successfully appended." << std::endl;
         }
     }
 
@@ -112,7 +114,7 @@ public:
         std::cout << "Text successfully " << (replace ? "replaced" : "inserted") << ": \"" << text << "\"" << std::endl;
     }
 
-    void deleteText(int lineIndex, int startIndex, int endIndex) {
+    void deleteText(int lineIndex, int startIndex, int numChars) {
         saveState();
         if (lineIndex < 0 || lineIndex >= numLines) {
             std::cerr << "Invalid line index." << std::endl;
@@ -121,12 +123,54 @@ public:
 
         char* currentLine = lines[lineIndex];
         size_t currentLength = strlen(currentLine);
-        if (startIndex < 0 || endIndex > currentLength || startIndex > endIndex) {
-            std::cerr << "Invalid start or end index." << std::endl;
+        if (startIndex < 0 || startIndex >= currentLength || numChars < 1 || startIndex + numChars > currentLength) {
+            std::cerr << "Invalid start index or number of characters." << std::endl;
             return;
         }
 
-        size_t newLength = currentLength - (endIndex - startIndex + 1) + 1;
+        size_t newLength = currentLength - numChars;
+        char* newLine = static_cast<char*>(malloc(newLength + 1));
+        if (newLine == nullptr) {
+            std::cerr << "Memory allocation failed." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        memcpy(newLine, currentLine, startIndex);
+        memcpy(newLine + startIndex, currentLine + startIndex + numChars, currentLength - startIndex - numChars + 1);
+
+        free(currentLine);
+        lines[lineIndex] = newLine;
+
+        std::cout << "Deleted successfully." << std::endl;
+    }
+
+    void cut(int lineIndex, int startIndex, int numChars) {
+        saveState();
+        if (lineIndex < 0 || lineIndex >= numLines) {
+            std::cerr << "Invalid line index." << std::endl;
+            return;
+        }
+
+        char* currentLine = lines[lineIndex];
+        size_t currentLength = strlen(currentLine);
+        if (startIndex < 0 || startIndex >= currentLength || numChars < 1 || startIndex + numChars > currentLength) {
+            std::cerr << "Invalid start index or number of characters." << std::endl;
+            return;
+        }
+
+        if (cutText != nullptr) {
+            free(cutText);
+        }
+        cutText = static_cast<char*>(malloc(numChars + 1));
+        if (cutText == nullptr) {
+            std::cerr << "Memory allocation failed." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        memcpy(cutText, currentLine + startIndex, numChars);
+        cutText[numChars] = '\0';
+
+        size_t newLength = currentLength - numChars + 1;
         char* newLine = static_cast<char*>(malloc(newLength));
         if (newLine == nullptr) {
             std::cerr << "Memory allocation failed." << std::endl;
@@ -134,12 +178,54 @@ public:
         }
 
         memcpy(newLine, currentLine, startIndex);
-        memcpy(newLine + startIndex, currentLine + endIndex + 1, currentLength - endIndex);
+        memcpy(newLine + startIndex, currentLine + startIndex + numChars, currentLength - startIndex - numChars + 1);
 
         free(currentLine);
         lines[lineIndex] = newLine;
 
-        std::cout << "Deleted successfully!" << std::endl;
+        std::cout << "Cut successfully!" << std::endl;
+    }
+
+    void paste(int lineIndex, int charIndex) {
+        if (cutText != nullptr) {
+            insert(lineIndex, charIndex, cutText, true);
+            free(cutText);
+            cutText = nullptr; // Reset cut text after pasting
+        } else if (copiedText != nullptr) {
+            insert(lineIndex, charIndex, copiedText, true);
+        } else {
+            std::cerr << "No text to paste." << std::endl;
+            return;
+        }
+        std::cout << "Text successfully pasted." << std::endl;
+    }
+
+    void copy(int lineIndex, int startIndex, int numChars) {
+        if (lineIndex < 0 || lineIndex >= numLines) {
+            std::cerr << "Invalid line index." << std::endl;
+            return;
+        }
+
+        char* currentLine = lines[lineIndex];
+        size_t currentLength = strlen(currentLine);
+        if (startIndex < 0 || startIndex >= currentLength || numChars < 1 || startIndex + numChars > currentLength) {
+            std::cerr << "Invalid start index or number of characters." << std::endl;
+            return;
+        }
+
+        if (copiedText != nullptr) {
+            free(copiedText);
+        }
+        copiedText = static_cast<char*>(malloc(numChars + 1));
+        if (copiedText == nullptr) {
+            std::cerr << "Memory allocation failed." << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        memcpy(copiedText, currentLine + startIndex, numChars);
+        copiedText[numChars] = '\0';
+
+        std::cout << "Text successfully copied." << std::endl;
     }
 
     void undo() {
@@ -286,9 +372,9 @@ private:
     Text& text;
     FileHandler fileHandler = FileHandler();
 
-    // static void clearConsole() {
-    //     system("clear");
-    // }
+    static void clearConsole() {
+    system("clear");
+    }
 
 public:
     explicit CommandParser(Text& txt) : text(txt) {}
@@ -296,7 +382,7 @@ public:
     void parse(const char* input) const {
         char cmd[20];
         sscanf(input, "%s", cmd);
-        // clearConsole();
+        clearConsole();
         if (strcmp(cmd, "help") == 0) {
             printHelp();
         } else if (strcmp(cmd, "exit") == 0) {
@@ -335,9 +421,21 @@ public:
             sscanf(input + 8, "%d %d %s", &lineIndex, &charIndex, word);
             text.insert(lineIndex, charIndex, word, true);
         } else if (strncmp(cmd, "delete", 6) == 0) {
-            int lineIndex, startIndex, endIndex;
-            sscanf(input + 7, "%d %d %d", &lineIndex, &startIndex, &endIndex);
-            text.deleteText(lineIndex, startIndex, endIndex);
+            int lineIndex, startIndex, numChars;
+            sscanf(input + 7, "%d %d %d", &lineIndex, &startIndex, &numChars);
+            text.deleteText(lineIndex, startIndex, numChars);  // No need to adjust numChars here
+        } else if (strncmp(cmd, "cut", 3) == 0) {
+            int lineIndex, startIndex, numChars;
+            sscanf(input + 4, "%d %d %d", &lineIndex, &startIndex, &numChars);
+            text.cut(lineIndex, startIndex, numChars);
+        } else if (strncmp(cmd, "copy", 4) == 0) {
+            int lineIndex, startIndex, numChars;
+            sscanf(input + 5, "%d %d %d", &lineIndex, &startIndex, &numChars);
+            text.copy(lineIndex, startIndex, numChars);
+        } else if (strncmp(cmd, "paste", 5) == 0) {
+            int lineIndex, charIndex;
+                        sscanf(input + 6, "%d %d", &lineIndex, &charIndex);
+            text.paste(lineIndex, charIndex);
         } else {
             std::cout << "The command '" << cmd << "' is not implemented.\n";
         }
@@ -357,7 +455,10 @@ public:
                   << "redo - Redo the last undone action\n"
                   << "insert <line> <index> <text> - Insert text at a specific line and index\n"
                   << "replace <line> <index> <text> - Replace text at a specific line and index\n"
-                  << "delete <line> <start> <end> - Delete text from start to end index on a specific line\n";
+                  << "delete <line> <start> <numChars> - Delete specified number of characters from a specific line starting from the given index\n"
+                  << "cut <line> <start> <numChars> - Cut specified number of characters from a specific line starting from the given index\n"
+                  << "copy <line> <start> <numChars> - Copy specified number of characters from a specific line starting from the given index\n"
+                  << "paste <line> <index> - Paste copied/cut text at a specific line and index\n";
     }
 };
 
