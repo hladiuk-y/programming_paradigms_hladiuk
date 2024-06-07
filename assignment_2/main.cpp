@@ -76,7 +76,7 @@ public:
         }
     }
 
-    void insert(int lineIndex, int charIndex, const char* text) {
+    void insert(int lineIndex, int charIndex, const char* text, bool replace = false) {
         saveState();
         if (lineIndex < 0 || lineIndex >= numLines) {
             std::cerr << "Invalid line index." << std::endl;
@@ -91,7 +91,7 @@ public:
         }
 
         size_t textLength = strlen(text);
-        size_t newLength = currentLength + textLength + 1;
+        size_t newLength = replace ? charIndex + textLength + currentLength - charIndex : currentLength + textLength + 1;
         char* newLine = static_cast<char*>(malloc(newLength));
         if (newLine == nullptr) {
             std::cerr << "Memory allocation failed." << std::endl;
@@ -100,12 +100,16 @@ public:
 
         memcpy(newLine, currentLine, charIndex);
         memcpy(newLine + charIndex, text, textLength);
-        memcpy(newLine + charIndex + textLength, currentLine + charIndex, currentLength - charIndex + 1);
+        if (replace) {
+            memcpy(newLine + charIndex + textLength, currentLine + charIndex + textLength, currentLength - charIndex - textLength + 1);
+        } else {
+            memcpy(newLine + charIndex + textLength, currentLine + charIndex, currentLength - charIndex + 1);
+        }
 
         free(currentLine);
         lines[lineIndex] = newLine;
 
-        std::cout << "Text successfully inserted: \"" << text << "\"" << std::endl;
+        std::cout << "Text successfully " << (replace ? "replaced" : "inserted") << ": \"" << text << "\"" << std::endl;
     }
 
     void deleteText(int lineIndex, int startIndex, int endIndex) {
@@ -325,6 +329,11 @@ public:
             char word[MAX_LINE_LENGTH];
             sscanf(input + 7, "%d %d %s", &lineIndex, &charIndex, word);
             text.insert(lineIndex, charIndex, word);
+        } else if (strncmp(cmd, "replace", 7) == 0) {
+            int lineIndex, charIndex;
+            char word[MAX_LINE_LENGTH];
+            sscanf(input + 8, "%d %d %s", &lineIndex, &charIndex, word);
+            text.insert(lineIndex, charIndex, word, true);
         } else if (strncmp(cmd, "delete", 6) == 0) {
             int lineIndex, startIndex, endIndex;
             sscanf(input + 7, "%d %d %d", &lineIndex, &startIndex, &endIndex);
@@ -336,18 +345,19 @@ public:
 
     static void printHelp() {
         std::cout << "Available commands:\n"
-                  << "  help         - Show this help message\n"
-                  << "  append TEXT  - Append text to the current line\n"
-                  << "  newline      - Start a new line\n"
-                  << "  print        - Print the stored text\n"
-                  << "  save FILENAME - Save the text to a file\n"
-                  << "  load FILENAME - Load text from a file\n"
-                  << "  insert LINE INDEX TEXT - Insert text at the specified position\n"
-                  << "  delete LINE START END - Delete text from the specified line and index range\n"
-                  << "  undo         - Undo the last command (up to 3)\n"
-                  << "  redo         - Redo the last undone command (up to 3)\n"
-                  << "  search TEXT  - Search for text in the stored lines\n"
-                  << "  exit         - Exit the editor\n";
+                  << "help - Show this help message\n"
+                  << "exit - Exit the program\n"
+                  << "append <text> - Append text to the end of the document\n"
+                  << "newline - Start a new line\n"
+                  << "print - Print the document\n"
+                  << "save <filename> - Save the document to a file\n"
+                  << "load <filename> - Load the document from a file\n"
+                  << "search <substring> - Search for a substring in the document\n"
+                  << "undo - Undo the last action\n"
+                  << "redo - Redo the last undone action\n"
+                  << "insert <line> <index> <text> - Insert text at a specific line and index\n"
+                  << "replace <line> <index> <text> - Replace text at a specific line and index\n"
+                  << "delete <line> <start> <end> - Delete text from start to end index on a specific line\n";
     }
 };
 
