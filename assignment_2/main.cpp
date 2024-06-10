@@ -78,7 +78,7 @@ public:
         }
     }
 
-    void insert(int lineIndex, int charIndex, const char* text, bool replace = false) {
+    void insert(int lineIndex, int charIndex, const char* text, bool showMessage = true, bool replace = false) {
         saveState();
         if (lineIndex < 0 || lineIndex >= numLines) {
             std::cerr << "Invalid line index." << std::endl;
@@ -93,7 +93,7 @@ public:
         }
 
         size_t textLength = strlen(text);
-        size_t newLength = replace ? charIndex + textLength + currentLength - charIndex : currentLength + textLength + 1;
+        size_t newLength = replace ? charIndex + textLength + currentLength - charIndex : currentLength + textLength + 2;
         char* newLine = static_cast<char*>(malloc(newLength));
         if (newLine == nullptr) {
             std::cerr << "Memory allocation failed." << std::endl;
@@ -102,16 +102,19 @@ public:
 
         memcpy(newLine, currentLine, charIndex);
         memcpy(newLine + charIndex, text, textLength);
-        if (replace) {
-            memcpy(newLine + charIndex + textLength, currentLine + charIndex + textLength, currentLength - charIndex - textLength + 1);
+        if (!replace) {
+            newLine[charIndex + textLength] = ' ';
+            memcpy(newLine + charIndex + textLength + 1, currentLine + charIndex, currentLength - charIndex + 1);
         } else {
-            memcpy(newLine + charIndex + textLength, currentLine + charIndex, currentLength - charIndex + 1);
+            memcpy(newLine + charIndex + textLength, currentLine + charIndex + textLength, currentLength - charIndex - textLength + 1);
         }
 
         free(currentLine);
         lines[lineIndex] = newLine;
 
-        std::cout << "Text successfully " << (replace ? "replaced" : "inserted") << ": \"" << text << "\"" << std::endl;
+        if (showMessage) {
+            std::cout << "Text successfully " << (replace ? "replaced" : "inserted") << "" << std::endl;
+        }
     }
 
     void deleteText(int lineIndex, int startIndex, int numChars) {
@@ -188,12 +191,11 @@ public:
 
     void paste(int lineIndex, int charIndex) {
         if (cutText != nullptr) {
-            insert(lineIndex, charIndex, cutText, true);
+            insert(lineIndex, charIndex, cutText, false);
             free(cutText);
-            cutText = nullptr; // Reset cut text after pasting
+            cutText = nullptr;
         } else if (copiedText != nullptr) {
-            insert(lineIndex, charIndex, copiedText, true);
-        } else {
+            insert(lineIndex, charIndex, copiedText, false);
             std::cerr << "No text to paste." << std::endl;
             return;
         }
@@ -414,16 +416,16 @@ public:
             int lineIndex, charIndex;
             char word[MAX_LINE_LENGTH];
             sscanf(input + 7, "%d %d %s", &lineIndex, &charIndex, word);
-            text.insert(lineIndex, charIndex, word);
+            text.insert(lineIndex, charIndex, word, true);
         } else if (strncmp(cmd, "replace", 7) == 0) {
             int lineIndex, charIndex;
             char word[MAX_LINE_LENGTH];
             sscanf(input + 8, "%d %d %s", &lineIndex, &charIndex, word);
-            text.insert(lineIndex, charIndex, word, true);
+            text.insert(lineIndex, charIndex, word, true, true);
         } else if (strncmp(cmd, "delete", 6) == 0) {
             int lineIndex, startIndex, numChars;
             sscanf(input + 7, "%d %d %d", &lineIndex, &startIndex, &numChars);
-            text.deleteText(lineIndex, startIndex, numChars);  // No need to adjust numChars here
+            text.deleteText(lineIndex, startIndex, numChars);
         } else if (strncmp(cmd, "cut", 3) == 0) {
             int lineIndex, startIndex, numChars;
             sscanf(input + 4, "%d %d %d", &lineIndex, &startIndex, &numChars);
@@ -434,7 +436,7 @@ public:
             text.copy(lineIndex, startIndex, numChars);
         } else if (strncmp(cmd, "paste", 5) == 0) {
             int lineIndex, charIndex;
-                        sscanf(input + 6, "%d %d", &lineIndex, &charIndex);
+            sscanf(input + 6, "%d %d", &lineIndex, &charIndex);
             text.paste(lineIndex, charIndex);
         } else {
             std::cout << "The command '" << cmd << "' is not implemented.\n";
