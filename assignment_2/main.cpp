@@ -113,7 +113,7 @@ public:
         lines[lineIndex] = newLine;
 
         if (showMessage) {
-            std::cout << "Text successfully " << (replace ? "replaced" : "inserted") << "" << std::endl;
+            std::cout << "Text successfully " << (replace ? "replaced." : "inserted.") << "" << std::endl;
         }
     }
 
@@ -186,7 +186,7 @@ public:
         free(currentLine);
         lines[lineIndex] = newLine;
 
-        std::cout << "Cut successfully!" << std::endl;
+        std::cout << "Cut successfully." << std::endl;
     }
 
     void paste(int lineIndex, int charIndex) {
