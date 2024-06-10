@@ -170,8 +170,8 @@ public:
         memcpy(cutText, currentLine + startIndex, numChars);
         cutText[numChars] = '\0';
 
-        size_t newLength = currentLength - numChars + 1;
-        char* newLine = static_cast<char*>(malloc(newLength));
+        size_t newLength = currentLength - numChars;
+        char* newLine = static_cast<char*>(malloc(newLength + 1));
         if (newLine == nullptr) {
             std::cerr << "Memory allocation failed." << std::endl;
             exit(EXIT_FAILURE);
@@ -373,7 +373,7 @@ private:
     FileHandler fileHandler = FileHandler();
 
     static void clearConsole() {
-    system("clear");
+        system("clear");
     }
 
 public:
