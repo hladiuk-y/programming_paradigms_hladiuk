@@ -1,8 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "helper.h"
 
 char* encrypt(const char* rawText, int key) {
+    helper_function();
     int length = strlen(rawText);
     char* encryptedText = (char*)malloc((length + 1) * sizeof(char));
 
@@ -22,6 +24,7 @@ char* encrypt(const char* rawText, int key) {
 }
 
 char* decrypt(const char* encryptedText, int key) {
+    helper_function();
     int length = strlen(encryptedText);
     char* decryptedText = (char*)malloc((length + 1) * sizeof(char));
 

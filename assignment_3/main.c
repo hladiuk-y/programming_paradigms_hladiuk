@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string.h>
+#include "helper.h"
 
 typedef char* (*EncryptFunc)(char*, int);
 typedef char* (*DecryptFunc)(char*, int);
