@@ -1,0 +1,3 @@
+creating dll - gcc -shared -o /Users/liz/CLionProjects/programming_paradigms_hladiuk/assignment_3/caesar.dll /Users/liz/CLionProjects/programming_paradigms_hladiuk/assignment_3/caesar.c
+link with main - gcc -o main /Users/liz/CLionProjects/programming_paradigms_hladiuk/assignment_3/main.c -ldl
+start main - ./main
