@@ -20,3 +20,22 @@ char* encrypt(const char* rawText, int key) {
     encryptedText[length] = '\0';
     return encryptedText;
 }
+
+char* decrypt(const char* encryptedText, int key) {
+    int length = strlen(encryptedText);
+    char* decryptedText = (char*)malloc((length + 1) * sizeof(char));
+
+    for (int i = 0; i < length; i++) {
+        char current = encryptedText[i];
+
+        if (isupper(current))
+            decryptedText[i] = ((current - 'A' - key + 26) % 26) + 'A';
+        else if (islower(current))
+            decryptedText[i] = ((current - 'a' - key + 26) % 26) + 'a';
+        else
+            decryptedText[i] = current;
+    }
+
+    decryptedText[length] = '\0';
+    return decryptedText;
+}
