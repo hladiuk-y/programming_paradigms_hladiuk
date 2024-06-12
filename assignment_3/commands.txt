@@ -1,0 +1,6 @@
+gcc -shared -o caesar.dll caesar.c
+gcc -o main main.c -ldl
+
+gcc -c helper.c -o helper.o
+ar rcs helper.a helper.o
+gcc -shared -o caesar.dll caesar.c helper.a
