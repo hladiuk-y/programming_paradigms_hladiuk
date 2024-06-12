@@ -7,7 +7,7 @@ typedef char* (*EncryptFunc)(char*, int);
 typedef char* (*DecryptFunc)(char*, int);
 
 int main() {
-    void* handle = dlopen("./caesar.dll", RTLD_LAZY);
+    void* handle = dlopen("/Users/liz/CLionProjects/programming_paradigms_hladiuk/assignment_3/caesar.dll", RTLD_LAZY);
     if (!handle) {
         fprintf(stderr, "Error: %s\n", dlerror());
         return 1;
