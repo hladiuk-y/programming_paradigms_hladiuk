@@ -8,6 +8,8 @@ char* encrypt(const char* rawText, int key) {
     int length = strlen(rawText);
     char* encryptedText = (char*)malloc((length + 1) * sizeof(char));
 
+    key = key % 26;
+
     for (int i = 0; i < length; i++) {
         char current = rawText[i];
 
@@ -27,6 +29,8 @@ char* decrypt(const char* encryptedText, int key) {
     helper_function();
     int length = strlen(encryptedText);
     char* decryptedText = (char*)malloc((length + 1) * sizeof(char));
+
+    key = key % 26;
 
     for (int i = 0; i < length; i++) {
         char current = encryptedText[i];
