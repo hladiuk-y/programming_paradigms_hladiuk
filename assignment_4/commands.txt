@@ -1,0 +1,1 @@
+create library - g++ -dynamiclib -o libcaesar.dylib /Users/liz/CLionProjects/programming_paradigms_hladiuk/assignment_4/caesar.cpp
